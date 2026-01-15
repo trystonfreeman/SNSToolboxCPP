@@ -3,11 +3,14 @@
 //
 
 #include "cjsontoEigen.h"
+
+#include <iostream>
+
 double cjsontoEigen::cjsontodouble(cJSON* cjson,std::string name) {
     double value = 0;
     cJSON* value_json = cJSON_GetObjectItem(cjson,name.c_str());
     if(value_json == nullptr) {
-        return -1;
+        std::cerr << "value " << name << " could not be found" << std::endl;
     }
     value = value_json->valuedouble;
     return value;
@@ -16,6 +19,7 @@ int cjsontoEigen::cjsontoint(cJSON* cjson,std::string name) {
     int value = 0;
     cJSON* value_json = cJSON_GetObjectItem(cjson,name.c_str());
     if(value_json == nullptr) {
+        std::cerr << "value " << name << " could not be found" << std::endl;
         return -1;
     }
     value = value_json->valueint;
@@ -25,6 +29,7 @@ bool cjsontoEigen::cjsontobool(cJSON* cjson,std::string name) {
     bool value = false;
     cJSON* value_json = cJSON_GetObjectItem(cjson,name.c_str());
     if(value_json == nullptr) {
+        std::cerr << "value " << name << " could not be found" << std::endl;
         return false;
     }
     value = cJSON_IsTrue(value_json)==1;
