@@ -1,7 +1,7 @@
 #pragma once
 #include "cJSON.h"
 #include <string>
-#include <Eigen/Eigen>
+#include "Eigen/Eigen"
 using Eigen::ArrayXXf;
 using Eigen::VectorXf;
 using Eigen::MatrixXf;

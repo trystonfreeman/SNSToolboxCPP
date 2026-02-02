@@ -1,6 +1,5 @@
 #pragma once
 #include <string>
-#include <Eigen/Eigen>
 #include "cjsontoEigen.h"
 #include <fstream>
 #include <string>
@@ -121,13 +120,15 @@ namespace SNSToolboxCPP {
 
         std::vector<std::pair<int, int>> connections;
         std::vector<int> channels;
+        std::vector<int> spiking_neurons;
+        std::vector<std::pair<int, int>> spiking_connections;
         bool CompiledSparse = false;
     private:
         void LoadFromFile(const std::string& FileName);
         void CompileSparse();
-        ArrayXXf ForwardSparse(VectorXf inputs);
+        [[nodiscard]] ArrayXXf ForwardSparse(const VectorXf& inputs);
         ArrayXXf ForwardDense(const VectorXf &inputs);
-        bool CheckInputSize(const VectorXf& inputs) const;
+        [[nodiscard]] bool CheckInputSize(const VectorXf& inputs) const;
 
         static std::string readFileIntoBuffer(const std::string& filename);
     };

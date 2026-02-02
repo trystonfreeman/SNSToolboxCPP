@@ -26,11 +26,11 @@ namespace SNSToolboxCPP{
         }
         switch(sim) {
             case Simulator::DenseSim:
-                ForwardDense(inputs);
+                outputs = ForwardDense(inputs);
             break;
             case Simulator::SparseSim:
                 
-                ForwardSparse(inputs);
+                outputs = ForwardSparse(inputs);
             break;
 
         }
@@ -146,30 +146,80 @@ namespace SNSToolboxCPP{
         return buffer;
     }
     void Network::CompileSparse() {
-        int k = 0;
+        int current_connection = 0;
+        int current_spiking_connection = 0;
+        int current_spiking_neuron = 0;
         for (int i = 0; i < num_neurons; i++) {
             for (int j = 0; j < num_neurons; j++) {
                 if (gMaxNon(i,j) != 0) {
-                    connections[k] = { i,j };
-                    k++;
+                    connections[current_connection] = { i,j };
+                    current_connection++;
+                }
+                if (gMaxSpike(i,j) != 0)
+                {
+                    spiking_connections[current_spiking_connection] = { i,j };
+                    current_spiking_connection++;
                 }
             }
             for (int j = 0; j < num_channels; j++) {
                 if (gIon(j, i) != 0) {
                     channels[j] = i;
-                    k++;
+
                 }
+            }
+            if (m(i) != 0)
+            {
+                spiking_neurons[current_spiking_neuron] = i;
+                current_spiking_neuron++;
             }
         }
         CompiledSparse = true;
     }
-    ArrayXXf Network::ForwardSparse(VectorXf inputs) {
+    ArrayXXf Network::ForwardSparse(const VectorXf& inputs) {
         std::cerr << "Sparse backend not implemented yet"<< std::endl;
-        ArrayXXf Outputs;
         if (!CompiledSparse) {
-            return Outputs;
+            CompileSparse();
         }
         // Implementation Here
+        v_last = v;
+        i_app = inputConn * inputs;
+        i_syn = VectorXf::Zero(num_neurons);
+        for (const auto& [sending_nrn,recieving_nrn] : connections)
+        {
+            const float g_syn_nrn = std::max(0.0f,std::min(gMaxNon(sending_nrn,recieving_nrn)*(v(recieving_nrn)-eLo(sending_nrn,recieving_nrn))/(eHi(sending_nrn,recieving_nrn)-eLo(sending_nrn,recieving_nrn)),gMaxNon(sending_nrn,recieving_nrn)));
+
+            i_syn(sending_nrn) = i_syn(sending_nrn) + g_syn_nrn*(delE(sending_nrn,recieving_nrn)-v(sending_nrn));
+        }
+        for (const auto& [sending_nrn,recieving_nrn] : spiking_connections)
+        {
+
+        }
+        for (int j = 0; j < num_channels; j++)
+        {
+
+            a_inf(j,channels[j]) = 1/(1 + kA(j,channels[j]) * std::exp(slopeA(j,channels[j]) * (eA(j,channels[j]) - v_last(channels[j]))));
+            b_inf(j,channels[j]) = 1/(1 + kB(j,channels[j]) * std::exp(slopeB(j,channels[j]) * (eB(j,channels[j]) - v_last(channels[j]))));
+            c_inf(j,channels[j]) = 1/(1 + kC(j,channels[j]) * std::exp(slopeC(j,channels[j]) * (eC(j,channels[j]) - v_last(channels[j]))));
+
+
+            tauB(j,channels[j]) = tauMaxB(j,channels[j]) * b_inf(j,channels[j]) * sqrt(kB(j,channels[j]) * std::exp(slopeB(j,channels[j])*(eB(j,channels[j]) - v_last(channels[j]))));
+            tauC(j,channels[j]) = tauMaxC(j,channels[j]) * c_inf(j,channels[j]) * sqrt(kC(j,channels[j]) * std::exp(slopeC(j,channels[j])*(eC(j,channels[j]) - v_last(channels[j]))));
+
+            bGateLast(j,channels[j]) = bGate(j,channels[j]);
+            cGateLast(j,channels[j]) = cGate(j,channels[j]);
+
+            bGate(j,channels[j]) = bGateLast(j,channels[j]) + dt * ((b_inf(j,channels[j]) - bGateLast(j,channels[j])) / tauB(j,channels[j]));
+            cGate(j,channels[j]) = cGateLast(j,channels[j]) + dt * ((c_inf(j,channels[j]) - cGateLast(j,channels[j])) / tauC(j,channels[j]));
+            // i_ion = gIon * Eigen::pow(a_inf, powA) * Eigen::pow(bGate, powB) * Eigen::pow(cGate, powC) * (eIon - V_last_gated);
+            i_ion(j,channels[j]) = gIon(j,channels[j]) * (eIon(j,channels[j]) - v_last(channels[j])) *
+                    pow(a_inf(j,channels[j]),powA(j,channels[j]))*
+                    pow(bGate(j,channels[j]),powB(j,channels[j]))*
+                    pow(cGate(j,channels[j]),powC(j,channels[j]));
+
+            i_gated(channels[j]) += i_ion(j,channels[j]);
+        }
+        v = v_last + (timeFactorMembrane.array() * (-gM.array() * (v_last - vRest).array() + iB.array() + i_syn.array() + i_app.array() + i_gated.array())).matrix();
+        ArrayXXf Outputs = (outConnVolt * v.matrix()).array();
         return Outputs;
     }
 
