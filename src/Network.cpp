@@ -1,4 +1,6 @@
-#include "include/Network.h"
+#include <cmath>
+
+#include "../include/Network.h"
 namespace SNSToolboxCPP{
     Network::Network(const std::string& filename)
     {
@@ -202,8 +204,8 @@ namespace SNSToolboxCPP{
             c_inf(j,channels[j]) = 1/(1 + kC(j,channels[j]) * std::exp(slopeC(j,channels[j]) * (eC(j,channels[j]) - v_last(channels[j]))));
 
 
-            tauB(j,channels[j]) = tauMaxB(j,channels[j]) * b_inf(j,channels[j]) * sqrt(kB(j,channels[j]) * std::exp(slopeB(j,channels[j])*(eB(j,channels[j]) - v_last(channels[j]))));
-            tauC(j,channels[j]) = tauMaxC(j,channels[j]) * c_inf(j,channels[j]) * sqrt(kC(j,channels[j]) * std::exp(slopeC(j,channels[j])*(eC(j,channels[j]) - v_last(channels[j]))));
+            tauB(j,channels[j]) = tauMaxB(j,channels[j]) * b_inf(j,channels[j]) * std::sqrt(kB(j,channels[j]) * std::exp(slopeB(j,channels[j])*(eB(j,channels[j]) - v_last(channels[j]))));
+            tauC(j,channels[j]) = tauMaxC(j,channels[j]) * c_inf(j,channels[j]) * std::sqrt(kC(j,channels[j]) * std::exp(slopeC(j,channels[j])*(eC(j,channels[j]) - v_last(channels[j]))));
 
             bGateLast(j,channels[j]) = bGate(j,channels[j]);
             cGateLast(j,channels[j]) = cGate(j,channels[j]);

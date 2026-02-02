@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 20)
 #set_property(TARGET Eigen3::Eigen PROPERTY IMPORTED_NO_SONAME TRUE)
 set(EXTRA_COMPONENT_DIRS include)
 add_library(SNSToolboxCPP STATIC
-        Network.cpp
+        src/Network.cpp
+        src/cjsontoEigen.cpp
         )
 #target_link_libraries(SNSToolboxCPP Eigen3::Eigen)

@@ -2,7 +2,7 @@
 // Created by tallg on 1/13/2026.
 //
 
-#include "cjsontoEigen.h"
+#include "../include/cjsontoEigen.h"
 
 #include <iostream>
 
